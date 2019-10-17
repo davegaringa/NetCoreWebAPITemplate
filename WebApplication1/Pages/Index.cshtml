@@ -3,54 +3,96 @@
 @{
     ViewData["Title"] = "Home page";
 }
-<div id="pdf-container"></div>
-<canvas id="canvas"></canvas>
+
+<div id="Acroform">
+    <h1>Warning: AcroForm/XFA is not supported</h1>
+</div>
+
+<div id="ValidPdf">
+    <iframe src="https://mozilla.github.io/pdf.js/web/viewer.html" style="width:100%; height:100%;" frameborder="0"></iframe>
+</div>
 
 <script>
-    loadPDFJS("https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf");
 
-    function loadPDFJS(pageUrl) {
-        //PDFJS.workerSrc = 'resources/js/pdfjs/pdf.worker.js';
+    document.getElementById('Acroform').style.display = 'none';
+    document.getElementById('ValidPdf').style.display = 'none';
+
+    (function () {
         var currentPage = 1;
         var pages = [];
-        var globalPdf = null;
-        var container = document.getElementById('pdf-container');
+        var pdfInstance = null;
+        var container = document.getElementById('viewport-container');
+    
+        window.PdfViewer = function (pdfUrl) {
+            pdfjsLib.getDocument(pdfUrl).then(function (pdf) {
+
+                if (!pdfInstance) {
+                    pdfInstance = pdf;
+
+                    pdfInstance.getMetadata().then(function (info) {
+                        console.log(info); // Metadata object here
+                        if (info.IsAcroFormPresent) {
+                            document.getElementById('Acroform').style.display = 'block';
+                            console.warn('Warning: AcroForm/XFA is not supported');
+                        } else {
+                            document.getElementById('ValidPdf').style.display = 'block';
+                            //document.getElementByName('iframePdf')[0].src = 'http://mozilla.github.io/pdf.js/web/viewer.html'; //+ _pdfUrl;
+                        }
+                    });
+                }
+                //pdf.getPage(currentPage).then(renderPage);
+            });
+
+            //pdfjsLib.getDocument(pageUrl).then(function (pdf) {
+            //    pdfDoc = pdfDoc_;   
+            //    pdfDoc.getMetadata().then(function(info) {
+            //        console.log(info); // Metadata object here
+            //    }).catch(function(err) {
+            //        console.log('Error getting meta data');
+            //        console.log(err);
+            //    });
+
+            //    // Render the first page or whatever here
+            //    // More code . . . 
+            //}).catch(function(err) {
+            //    console.log('Error getting PDF from ' + url);
+            //    console.log(err);
+            //});
+        }
+
         function renderPage(page) {
             //
             // Prepare canvas using PDF page dimensions
             //
             var canvas = document.createElement('canvas');
-            var viewport = page.getViewport(window.screen.width / page.getViewport(1.0).width);
+            //var pdfViewport = page.getViewport(window.screen.width / page.getViewport(1.0).width);
+            var pdfViewport = page.getViewport(container.offsetWidth / page.getViewport(1.0).width);
             // append the created canvas to the container
             container.appendChild(canvas);
             // Get context of the canvas
             var context = canvas.getContext('2d');
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
+            canvas.height = pdfViewport.height;
+            canvas.width = pdfViewport.width;
             //
             // Render PDF page into canvas context
             //
             var renderContext = {
                 canvasContext: context,
-                viewport: viewport
+                viewport: pdfViewport
             };
             page.render(renderContext).then(function () {
-                if (currentPage < globalPdf.numPages) {
+                if (currentPage < pdfInstance.numPages) {
                     pages[currentPage] = canvas;
                     currentPage++;
-                    globalPdf.getPage(currentPage).then(renderPage);
+                    pdfInstance.getPage(currentPage).then(renderPage);
                 } else {
                     // Callback function here, which will trigger when all pages are loaded
                 }
             });
         }
-        pdfjsLib.getDocument(pageUrl).then(function (pdf) {
-            if (!globalPdf) {
-                globalPdf = pdf;
-            }
-            pdf.getPage(currentPage).then(renderPage);
-        });
-    }
+    })();
+
+    //var pdfUrl = decodeURIComponent("https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf");
+    PdfViewer("C_Sharp_Succinctly.pdf");
 
 </script>
-

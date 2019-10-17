@@ -3,3 +3,8 @@
 ################################################################################
 
 /.vs/WebApplication1
+/MyWebApi/bin/Debug/netcoreapp2.2
+/MyWebApi/obj
+/TodoApi
+/WebApplication1/bin/Debug/netcoreapp2.2
+/WebApplication1/obj
